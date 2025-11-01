@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitulín y las Multiplicaciones Mágicas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 70%, #90EE90 100%);
+        }
+
+        #gameInfo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        #score {
+            color: #FFD700;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #lives {
+            color: #FF6347;
+            font-size: 20px;
+            margin-top: 5px;
+        }
+
+        #level {
+            color: #4169E1;
+            font-size: 20px;
+            margin-top: 5px;
+        }
+
+        #tableMode {
+            color: #9370DB;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        /* Menú de selección de tabla */
+        #tableMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            text-align: center;
+            z-index: 2000;
+            border: 5px solid #FFD700;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #tableMenu.hidden {
+            display: none;
+        }
+
+        #tableMenu h2 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #tableMenu p {
+            color: #FFD700;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .table-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .table-btn {
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .table-btn:hover {
+            transform: scale(1.1);
+            background: #FFD700;
+            color: white;
+        }
+
+        .table-btn.selected {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #randomBtn {
+            width: 100%;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin-top: 20px;
+        }
+
+        #randomBtn:hover {
+            transform: scale(1.05);
+        }
+
+        #startGameBtn {
+            width: 100%;
+            padding: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            margin-top: 20px;
+        }
+
+        #startGameBtn:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        #startGameBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #questionBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            display: none;
+            text-align: center;
+            z-index: 1000;
+            border: 5px solid #FFD700;
+        }
+
+        #questionBox.show {
+            display: block;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.5); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        #questionText {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #answerInput {
+            font-size: 24px;
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+            border: 3px solid #4CAF50;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        #submitAnswer {
+            font-size: 20px;
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        #submitAnswer:hover {
+            background: #45a049;
+        }
+
+        #feedback {
+            font-size: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+
+        .correct {
+            color: #4CAF50;
+        }
+
+        .incorrect {
+            color: #FF6347;
+        }
+
+        /* Ventana de chiste */
+        #jokeBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            display: none;
+            text-align: center;
+            z-index: 1500;
+            border: 5px solid #FF6347;
+            max-width: 600px;
+        }
+
+        #jokeBox.show {
+            display: block;
+            animation: popIn 0.5s ease-out;
+        }
+
+        #jokeBox h2 {
+            color: #FF6347;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        #jokeText {
+            font-size: 18px;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 10px;
+        }
+
+        #continueBtn {
+            font-size: 20px;
+            padding: 15px 40px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        #continueBtn:hover {
+            background: #45a049;
+        }
+
+        #instructions {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #instructions h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        #instructions p {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        #gameOver.show {
+            display: block;
+        }
+
+        #gameOver h2 {
+            font-size: 36px;
+            color: #FFD700;
+            margin-bottom: 20px;
+        }
+
+        #gameOver p {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        #restartBtn {
+            font-size: 20px;
+            padding: 15px 40px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #restartBtn:hover {
+            background: #45a049;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 3px solid #333;
+            border-radius: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+
+        .control-btn:active {
+            background: rgba(255, 215, 0, 0.8);
+            transform: scale(0.95);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="gameInfo">
+            <div id="score">👑 Coronas: 0</div>
+            <div id="lives">❤️ Vidas: 3</div>
+            <div id="level">📊 Nivel: 1</div>
+            <div id="tableMode">📚 Modo: -</div>
+        </div>
+
+        <!-- Menú de selección de tabla -->
+        <div id="tableMenu">
+            <h2>🎮 ¡Elige tu aventura! 🎮</h2>
+            <p>Selecciona qué tabla de multiplicar quieres practicar</p>
+            
+            <div class="table-buttons">
+                <button class="table-btn" data-table="2">Tabla del 2</button>
+                <button class="table-btn" data-table="3">Tabla del 3</button>
+                <button class="table-btn" data-table="4">Tabla del 4</button>
+                <button class="table-btn" data-table="5">Tabla del 5</button>
+                <button class="table-btn" data-table="6">Tabla del 6</button>
+                <button class="table-btn" data-table="7">Tabla del 7</button>
+                <button class="table-btn" data-table="8">Tabla del 8</button>
+                <button class="table-btn" data-table="9">Tabla del 9</button>
+            </div>
+
+            <button id="randomBtn">🎲 Modo Aleatorio (Todas las tablas)</button>
+            
+            <button id="startGameBtn" disabled>🚀 ¡COMENZAR AVENTURA!</button>
+        </div>
+
+        <!-- Ventana de chiste -->
+        <div id="jokeBox">
+            <h2>🎉 ¡PREMIO POR SUPERAR EL NIVEL! 🎉</h2>
+            <div id="jokeText"></div>
+            <button id="continueBtn">😄 ¡Continuar!</button>
+        </div>
+
+        <div id="questionBox">
+            <div id="questionText"></div>
+            <input type="number" id="answerInput" placeholder="?" autocomplete="off">
+            <br>
+            <button id="submitAnswer">Responder</button>
+            <div id="feedback"></div>
+        </div>
+
+        <div id="gameOver">
+            <h2>¡Juego Terminado!</h2>
+            <p id="finalScore"></p>
+            <p id="finalMessage"></p>
+            <button id="restartBtn">Jugar de Nuevo</button>
+        </div>
+
+        <div id="controls">
+            <button class="control-btn" id="leftBtn">⬅️</button>
+            <button class="control-btn" id="jumpBtn">⬆️</button>
+            <button class="control-btn" id="rightBtn">➡️</button>
+        </div>
+    </div>
+
+    <div id="instructions">
+        <h2>🎮 ¡Ayuda a Capitulín a aprender las tablas! 🎮</h2>
+        <p>⬅️ ➡️ Flechas para mover | ⬆️ Espacio para saltar | 🖱️ Usa los botones en pantalla</p>
+        <p>👑 Recoge coronas y responde multiplicaciones | 👾 ¡Evita los monstruos!</p>
+        <p>🎯 ¡Los monstruos aparecen gradualmente! Primeros niveles: solo morados normales</p>
+        <p>📊 ¡Cada nivel es diferente! Supera niveles y gana chistes como premio! 😄</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Chistes del PDF
+        const jokes = [
+            "- ¡Camarero! He encontrado un pelo en la sopa y no es mío.\n- Esta bien, démelo, lo guardaremos por si vienen a reclamarlo.",
+            "- ¿Qué le dice una impresora a otra?\n- ¿Esta hoja es tuya o es impresión mía?",
+            "- Perdone, ¿es aquí el examen de jardinería?\n- No, se ha equivocado de planta.\n- ¡Pues si que empiezo bien!",
+            "- ¿Qué vio en mis radiografías, doctor?\n- Creemos que tiene el mal de Wilkinson.\n- ¿Y eso qué es?\n- No tenemos ni la menor idea, señor Wilkinson.",
+            "- Paco en el avión. Una azafata reparte chicles.\n- Oiga, y esto ¿para qué es?\n- Para que no tengan molestias en los oídos al cambiar de presión.\nCuando aterrizan Paco le pregunta a la azafata:\n- ¿Y cómo me quito ahora el chicle de las orejas?",
+            "- Mamá, ¿qué haces en frente del ordenador con los ojos cerrados?\n- Nada hijo, es que Windows me ha dicho que cierre las pestañas…",
+            "- En el dentista:\n- Lo siento, pero tiene la dentadura en muy mal estado. Tendré que extraerle siete dientes.\n- ¡Cielos! ¿Y eso duele?\n- Bueno... A veces me dan calambres en el brazo.",
+            "- SE ABRE EL TELÓN: Se ve un rancho. Muchos caballos. Aparece un gitano. Desaparecen los caballos. SE CIERRA EL TELÓN.\n¿Cómo se llama la película?\n- EL HOMBRE QUE SUSTRABABA LOS CABALLOS",
+            "- Doctor, doctor! Mire me toco aquí y me duele... me toco aquí y me duele... me toco aquí y me duele... ¿sabe qué es lo que me pasa?\n- Usted tiene el dedo roto.",
+            "- Dos sujetos a punto de enfrentarse en duelo:\n- ¡Cómo! Este estuche sólo trae una pistola.\nY le responde su rival:\n- No se preocupe... nos turnamos, primero tiro yo y luego usted.",
+            "- Mamá mamá que buena está la paella.\n- Pues repite hijo, repite.\n- Mamá mamá que buena esta la paella.",
+            "- ¿Sabes que mi hermano anda en bicicleta desde los cuatro años?\n- Mmm, ya debe estar lejos.",
+            "- Luisito, ¿qué es la A?, pregunta la profesora\n- Una vocal, profesora\n- ¿Y la K?\n- Una consonante que no se puede repetir.",
+            "- Pedrito, ¿qué planeta va después de Marte?\n- Miércoles.",
+            "- Papá, ¿qué significa sintaxis?\n- Que tienes que coger el autobús\n- Gracias papá, eres genial.",
+            "- Había una vez un hombre tan pequeño que se subió encima de una canica y dijo:\n- ¡El mundo es mío!",
+            "- La maestra:\n- Jaimito, si en esta mano tengo 8 naranjas y en esta otra 6 naranjas ¿Qué tengo?\n- Unas manos enormes, señorita.",
+            "- Una bombilla en una fiesta le dice a otra:\n- Tía! Te noto como apagada.\nY su amiga le contesta:\n- No, es que estoy fundida.",
+            "- Le he comprado a mi mujer una cosa que se pone de 0 a 100 en dos segundos.\n- ¿Qué es, un coche?\n- No, una báscula…",
+            "- ¿Cómo se llama el campeón de buceo japonés?\n- Tokofondo.\n- ¿Y el subcampeón?\n- Kasitoko."
+        ];
+
+        // Game state
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let gameRunning = false;
+        let gameStarted = false;
+        let currentQuestion = null;
+        let isPaused = false;
+        let invincible = false;
+        let invincibleTimer = 0;
+
+        // Configuración de tabla
+        let selectedTable = null;
+        let tableMode = 'none';
+
+        // Player (Capitulín)
+        const player = {
+            x: 50,
+            y: 450,
+            width: 40,
+            height: 50,
+            velocityY: 0,
+            velocityX: 0,
+            speed: 5,
+            jumpPower: 15,
+            gravity: 0.6,
+            isJumping: false,
+            direction: 1
+        };
+
+        let platforms = [];
+        let crowns = [];
+        let monsters = [];
+
+        const clouds = [
+            { x: 100, y: 80, size: 50 },
+            { x: 400, y: 120, size: 60 },
+            { x: 650, y: 60, size: 45 }
+        ];
+
+        const keys = {};
+
+        // Audio context
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSuccessSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 523.25;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+            
+            setTimeout(() => {
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioContext.destination);
+                osc2.frequency.value = 659.25;
+                osc2.type = 'sine';
+                gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                osc2.start(audioContext.currentTime);
+                osc2.stop(audioContext.currentTime + 0.3);
+            }, 100);
+        }
+
+        function playLevelCompleteSound() {
+            const notes = [523.25, 587.33, 659.25, 783.99];
+            notes.forEach((freq, index) => {
+                setTimeout(() => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                }, index * 150);
+            });
+        }
+
+        function playErrorSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 200;
+            oscillator.type = 'sawtooth';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // Menú de tablas
+        document.querySelectorAll('.table-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedTable = parseInt(btn.dataset.table);
+                tableMode = `Tabla del ${selectedTable}`;
+                document.getElementById('startGameBtn').disabled = false;
+            });
+        });
+
+        document.getElementById('randomBtn').addEventListener('click', () => {
+            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+            selectedTable = null;
+            tableMode = 'Aleatorio';
+            document.getElementById('startGameBtn').disabled = false;
+        });
+
+        document.getElementById('startGameBtn').addEventListener('click', () => {
+            document.getElementById('tableMenu').classList.add('hidden');
+            document.getElementById('tableMode').textContent = `📚 Modo: ${tableMode}`;
+            gameStarted = true;
+            gameRunning = true;
+            init();
+        });
+
+        function init() {
+            spawnLevel();
+            gameLoop();
+        }
+
+        function spawnLevel() {
+            createLevelLayout();
+            spawnCrowns();
+            spawnMonsters();
+        }
+
+        function createLevelLayout() {
+            platforms = [];
+            platforms.push({ x: 0, y: 550, width: 800, height: 50 });
+            
+            switch(level) {
+                case 1:
+                    platforms.push({ x: 150, y: 450, width: 120, height: 20 });
+                    platforms.push({ x: 350, y: 380, width: 120, height: 20 });
+                    platforms.push({ x: 550, y: 450, width: 120, height: 20 });
+                    break;
+                case 2:
+                    platforms.push({ x: 50, y: 480, width: 100, height: 20 });
+                    platforms.push({ x: 180, y: 420, width: 100, height: 20 });
+                    platforms.push({ x: 310, y: 360, width: 100, height: 20 });
+                    platforms.push({ x: 440, y: 300, width: 100, height: 20 });
+                    platforms.push({ x: 570, y: 240, width: 100, height: 20 });
+                    break;
+                case 3:
+                    platforms.push({ x: 100, y: 400, width: 80, height: 20 });
+                    platforms.push({ x: 220, y: 320, width: 80, height: 20 });
+                    platforms.push({ x: 340, y: 400, width: 80, height: 20 });
+                    platforms.push({ x: 460, y: 320, width: 80, height: 20 });
+                    platforms.push({ x: 580, y: 400, width: 80, height: 20 });
+                    platforms.push({ x: 360, y: 220, width: 100, height: 20 });
+                    break;
+                case 4:
+                    platforms.push({ x: 50, y: 500, width: 150, height: 20 });
+                    platforms.push({ x: 250, y: 420, width: 120, height: 20 });
+                    platforms.push({ x: 420, y: 340, width: 120, height: 20 });
+                    platforms.push({ x: 300, y: 260, width: 100, height: 20 });
+                    platforms.push({ x: 580, y: 480, width: 150, height: 20 });
+                    break;
+                case 5:
+                    platforms.push({ x: 100, y: 480, width: 60, height: 20 });
+                    platforms.push({ x: 200, y: 420, width: 60, height: 20 });
+                    platforms.push({ x: 300, y: 360, width: 60, height: 20 });
+                    platforms.push({ x: 400, y: 300, width: 60, height: 20 });
+                    platforms.push({ x: 500, y: 360, width: 60, height: 20 });
+                    platforms.push({ x: 600, y: 420, width: 60, height: 20 });
+                    platforms.push({ x: 350, y: 220, width: 100, height: 20 });
+                    break;
+                case 6:
+                    platforms.push({ x: 0, y: 200, width: 800, height: 20 });
+                    platforms.push({ x: 150, y: 480, width: 100, height: 20 });
+                    platforms.push({ x: 300, y: 400, width: 100, height: 20 });
+                    platforms.push({ x: 450, y: 320, width: 100, height: 20 });
+                    platforms.push({ x: 600, y: 480, width: 100, height: 20 });
+                    break;
+                case 7:
+                    platforms.push({ x: 50, y: 500, width: 120, height: 20 });
+                    platforms.push({ x: 650, y: 450, width: 120, height: 20 });
+                    platforms.push({ x: 100, y: 380, width: 120, height: 20 });
+                    platforms.push({ x: 600, y: 330, width: 120, height: 20 });
+                    platforms.push({ x: 150, y: 260, width: 120, height: 20 });
+                    platforms.push({ x: 550, y: 210, width: 120, height: 20 });
+                    break;
+                case 8:
+                    platforms.push({ x: 350, y: 480, width: 100, height: 20 });
+                    platforms.push({ x: 200, y: 420, width: 100, height: 20 });
+                    platforms.push({ x: 500, y: 360, width: 100, height: 20 });
+                    platforms.push({ x: 150, y: 300, width: 100, height: 20 });
+                    platforms.push({ x: 550, y: 240, width: 100, height: 20 });
+                    platforms.push({ x: 350, y: 180, width: 100, height: 20 });
+                    break;
+                default:
+                    let numPlatforms = 5 + Math.floor(Math.random() * 3);
+                    for (let i = 0; i < numPlatforms; i++) {
+                        platforms.push({
+                            x: Math.random() * 650 + 50,
+                            y: Math.random() * 300 + 250,
+                            width: Math.random() * 60 + 60,
+                            height: 20
+                        });
+                    }
+                    break;
+            }
+        }
+
+        function spawnCrowns() {
+            crowns = [];
+            const crownCount = Math.min(3 + level, 8);
+            const availablePlatforms = platforms.filter(p => p.y < 540);
+            
+            for (let i = 0; i < Math.min(crownCount, availablePlatforms.length); i++) {
+                const platform = availablePlatforms[i % availablePlatforms.length];
+                const offsetX = (i % 2) * (platform.width / 2) + platform.width / 4;
+                
+                let num1, num2;
+                if (selectedTable === null) {
+                    const maxNum = Math.min(9, 3 + level);
+                    num1 = Math.floor(Math.random() * maxNum) + 2;
+                    num2 = Math.floor(Math.random() * 9) + 1;
+                } else {
+                    num1 = selectedTable;
+                    num2 = Math.floor(Math.random() * 10) + 1;
+                }
+                
+                crowns.push({
+                    x: platform.x + offsetX,
+                    y: platform.y - 35,
+                    width: 30,
+                    height: 30,
+                    collected: false,
+                    num1: num1,
+                    num2: num2
+                });
+            }
+            
+            if (crownCount > availablePlatforms.length) {
+                const extraCrowns = crownCount - availablePlatforms.length;
+                for (let i = 0; i < extraCrowns; i++) {
+                    let num1, num2;
+                    if (selectedTable === null) {
+                        const maxNum = Math.min(9, 3 + level);
+                        num1 = Math.floor(Math.random() * maxNum) + 2;
+                        num2 = Math.floor(Math.random() * 9) + 1;
+                    } else {
+                        num1 = selectedTable;
+                        num2 = Math.floor(Math.random() * 10) + 1;
+                    }
+                    
+                    crowns.push({
+                        x: 100 + i * 150,
+                        y: 510,
+                        width: 30,
+                        height: 30,
+                        collected: false,
+                        num1: num1,
+                        num2: num2
+                    });
+                }
+            }
+        }
+
+        function spawnMonsters() {
+            monsters = [];
+            // Nivel 1: 1 monstruo, Nivel 2: 1, Nivel 3: 2, Nivel 4: 2, Nivel 5+: 3
+            let monsterCount = Math.min(Math.ceil(level / 2), 3);
+            const groundPlatforms = platforms.filter(p => p.y > 300 && p.y < 540);
+            
+            if (groundPlatforms.length === 0) return;
+            
+            for (let i = 0; i < monsterCount; i++) {
+                const platform = groundPlatforms[i % groundPlatforms.length];
+                
+                let monsterType = 'normal';
+                let speed = 0.8 + level * 0.15; // Velocidad reducida
+                let color = '#8B008B';
+                let range = platform.width - 35;
+                
+                // Tipos de monstruos aparecen más tarde
+                if (level >= 4 && i % 3 === 0) {
+                    monsterType = 'fast';
+                    speed *= 1.5;
+                    color = '#FF4500';
+                } else if (level >= 6 && i % 3 === 1) {
+                    monsterType = 'big';
+                    color = '#4B0082';
+                } else if (level >= 8 && i % 3 === 2) {
+                    monsterType = 'jumper';
+                    color = '#DC143C';
+                }
+                
+                let monsterX = platform.x + 10;
+                let monsterY = platform.y - 35;
+                let bestPosition = { x: monsterX, dist: 0 };
+                
+                // Buscar la mejor posición (la más alejada de coronas)
+                for (let attempt = 0; attempt < 30; attempt++) {
+                    let testX = platform.x + Math.random() * (platform.width - 35);
+                    let minDistToCrown = Infinity;
+                    
+                    // Calcular la distancia mínima a cualquier corona
+                    for (let crown of crowns) {
+                        const dist = Math.sqrt(Math.pow(testX - crown.x, 2) + Math.pow(monsterY - crown.y, 2));
+                        minDistToCrown = Math.min(minDistToCrown, dist);
+                    }
+                    
+                    // Si esta posición está más lejos de las coronas, guardarla
+                    if (minDistToCrown > bestPosition.dist) {
+                        bestPosition.x = testX;
+                        bestPosition.dist = minDistToCrown;
+                    }
+                }
+                
+                // Usar la mejor posición encontrada
+                monsterX = bestPosition.x;
+                
+                monsters.push({
+                    x: monsterX,
+                    y: monsterY,
+                    width: monsterType === 'big' ? 45 : 35,
+                    height: monsterType === 'big' ? 45 : 35,
+                    speed: speed,
+                    direction: i % 2 === 0 ? 1 : -1,
+                    startX: monsterX,
+                    range: range,
+                    platformIndex: i,
+                    type: monsterType,
+                    color: color,
+                    jumpTimer: 0,
+                    velocityY: 0
+                });
+            }
+        }
+
+        function drawPlayer() {
+            if (invincible && Math.floor(Date.now() / 100) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+            
+            ctx.fillStyle = '#0066CC';
+            ctx.fillRect(player.x + 8, player.y + 35, 10, 15);
+            ctx.fillRect(player.x + 22, player.y + 35, 10, 15);
+            
+            ctx.fillStyle = '#FF6347';
+            ctx.fillRect(player.x + 5, player.y + 20, 30, 18);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(player.x, player.y + 22, 5, 12);
+            ctx.fillRect(player.x + 35, player.y + 22, 5, 12);
+            
+            ctx.fillStyle = '#FFD4A3';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2, player.y + 12, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#4B2E1F';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2 - 6, player.y + 5, 8, 0, Math.PI * 2);
+            ctx.arc(player.x + player.width/2, player.y + 3, 8, 0, Math.PI * 2);
+            ctx.arc(player.x + player.width/2 + 6, player.y + 5, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2 - 4, player.y + 10, 2, 0, Math.PI * 2);
+            ctx.arc(player.x + player.width/2 + 4, player.y + 10, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2, player.y + 13, 5, 0, Math.PI);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            ctx.font = '16px Arial';
+            ctx.fillText('👑', player.x + player.width/2 - 8, player.y - 2);
+            
+            ctx.globalAlpha = 1;
+        }
+
+        function drawMonsters() {
+            monsters.forEach(monster => {
+                ctx.fillStyle = monster.color;
+                ctx.fillRect(monster.x, monster.y, monster.width, monster.height);
+                
+                if (monster.type === 'big') {
+                    ctx.fillStyle = '#4B0082';
+                    for (let i = 0; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(monster.x + i * 12, monster.y);
+                        ctx.lineTo(monster.x + i * 12 + 6, monster.y - 10);
+                        ctx.lineTo(monster.x + i * 12 + 12, monster.y);
+                        ctx.fill();
+                    }
+                } else if (monster.type === 'fast') {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.moveTo(monster.x + monster.width/2 - 5, monster.y + 5);
+                    ctx.lineTo(monster.x + monster.width/2 + 2, monster.y + 12);
+                    ctx.lineTo(monster.x + monster.width/2 - 2, monster.y + 12);
+                    ctx.lineTo(monster.x + monster.width/2 + 5, monster.y + 20);
+                    ctx.lineTo(monster.x + monster.width/2 - 3, monster.y + 16);
+                    ctx.lineTo(monster.x + monster.width/2 + 1, monster.y + 16);
+                    ctx.fill();
+                } else if (monster.type === 'jumper') {
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(monster.x + monster.width/2, monster.y + monster.height + i * 3, 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else {
+                    ctx.fillStyle = '#4B0082';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(monster.x + i * 12, monster.y);
+                        ctx.lineTo(monster.x + i * 12 + 6, monster.y - 8);
+                        ctx.lineTo(monster.x + i * 12 + 12, monster.y);
+                        ctx.fill();
+                    }
+                }
+                
+                const eyeSize = monster.type === 'big' ? 5 : 4;
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(monster.x + monster.width * 0.3, monster.y + monster.height * 0.35, eyeSize, 0, Math.PI * 2);
+                ctx.arc(monster.x + monster.width * 0.7, monster.y + monster.height * 0.35, eyeSize, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(monster.x + monster.width * 0.3, monster.y + monster.height * 0.35, eyeSize/2, 0, Math.PI * 2);
+                ctx.arc(monster.x + monster.width * 0.7, monster.y + monster.height * 0.35, eyeSize/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFF';
+                const teethCount = monster.type === 'big' ? 5 : 4;
+                const teethWidth = monster.width / teethCount;
+                for (let i = 0; i < teethCount; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(monster.x + i * teethWidth, monster.y + monster.height - 10);
+                    ctx.lineTo(monster.x + i * teethWidth + teethWidth/2, monster.y + monster.height);
+                    ctx.lineTo(monster.x + i * teethWidth + teethWidth, monster.y + monster.height - 10);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function updateMonsters() {
+            if (isPaused) return;
+            
+            monsters.forEach(monster => {
+                monster.x += monster.speed * monster.direction;
+                
+                if (monster.x > monster.startX + monster.range || monster.x < monster.startX) {
+                    monster.direction *= -1;
+                }
+                
+                if (monster.type === 'jumper') {
+                    monster.jumpTimer++;
+                    // Saltan con menos frecuencia (180 frames en vez de 120) y más bajo (-10 en vez de -12)
+                    if (monster.jumpTimer > 180 && monster.velocityY === 0) {
+                        monster.velocityY = -10;
+                        monster.jumpTimer = 0;
+                    }
+                    
+                    monster.velocityY += 0.6;
+                    monster.y += monster.velocityY;
+                    
+                    platforms.forEach(platform => {
+                        if (monster.x + monster.width > platform.x &&
+                            monster.x < platform.x + platform.width &&
+                            monster.y + monster.height > platform.y &&
+                            monster.y + monster.height < platform.y + platform.height &&
+                            monster.velocityY > 0) {
+                            
+                            monster.y = platform.y - monster.height;
+                            monster.velocityY = 0;
+                        }
+                    });
+                }
+            });
+        }
+
+        function drawPlatforms() {
+            platforms.forEach(platform => {
+                ctx.fillStyle = '#228B22';
+                ctx.fillRect(platform.x, platform.y, platform.width, 5);
+                
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(platform.x, platform.y + 5, platform.width, platform.height - 5);
+                
+                ctx.fillStyle = '#654321';
+                for (let i = 0; i < platform.width; i += 20) {
+                    for (let j = 0; j < platform.height - 5; j += 15) {
+                        ctx.fillRect(platform.x + i + 5, platform.y + j + 10, 3, 3);
+                    }
+                }
+            });
+        }
+
+        function drawCrowns() {
+            crowns.forEach(crown => {
+                if (!crown.collected) {
+                    ctx.save();
+                    ctx.translate(crown.x, crown.y);
+                    ctx.rotate(Math.sin(Date.now() / 200) * 0.2);
+                    
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = '30px Arial';
+                    ctx.fillText('👑', -15, 15);
+                    
+                    ctx.restore();
+                }
+            });
+        }
+
+        function drawClouds() {
+            clouds.forEach(cloud => {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.size * 0.5, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.4, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.8, cloud.y, cloud.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                cloud.x -= 0.2;
+                if (cloud.x < -cloud.size) cloud.x = canvas.width + cloud.size;
+            });
+        }
+
+        function updatePlayer() {
+            if (isPaused) return;
+
+            if (invincible) {
+                invincibleTimer--;
+                if (invincibleTimer <= 0) {
+                    invincible = false;
+                }
+            }
+
+            if (keys['ArrowLeft']) {
+                player.velocityX = -player.speed;
+                player.direction = -1;
+            } else if (keys['ArrowRight']) {
+                player.velocityX = player.speed;
+                player.direction = 1;
+            } else {
+                player.velocityX *= 0.8;
+            }
+
+            player.x += player.velocityX;
+
+            if (player.x < 0) {
+                player.x = 0;
+                player.velocityX = 0;
+            }
+            if (player.x + player.width > canvas.width) {
+                player.x = canvas.width - player.width;
+                player.velocityX = 0;
+            }
+
+            player.velocityY += player.gravity;
+            player.y += player.velocityY;
+
+            player.isJumping = true;
+            platforms.forEach(platform => {
+                if (player.x + player.width > platform.x &&
+                    player.x < platform.x + platform.width &&
+                    player.y + player.height > platform.y &&
+                    player.y + player.height < platform.y + platform.height &&
+                    player.velocityY > 0) {
+                    
+                    player.y = platform.y - player.height;
+                    player.velocityY = 0;
+                    player.isJumping = false;
+                }
+            });
+
+            crowns.forEach(crown => {
+                if (!crown.collected &&
+                    player.x + player.width > crown.x &&
+                    player.x < crown.x + crown.width &&
+                    player.y + player.height > crown.y &&
+                    player.y < crown.y + crown.height) {
+                    
+                    collectCrown(crown);
+                }
+            });
+
+            if (!invincible) {
+                monsters.forEach(monster => {
+                    if (player.x + player.width > monster.x &&
+                        player.x < monster.x + monster.width &&
+                        player.y + player.height > monster.y &&
+                        player.y < monster.y + monster.height) {
+                        
+                        hitByMonster();
+                    }
+                });
+            }
+        }
+
+        function hitByMonster() {
+            lives--;
+            playErrorSound();
+            document.getElementById('lives').textContent = `❤️ Vidas: ${lives}`;
+            invincible = true;
+            invincibleTimer = 90; // 1.5 segundos de invencibilidad (antes 60 = 1 segundo)
+            
+            player.velocityY = -10;
+            player.x -= player.direction * 30;
+            
+            if (lives <= 0) {
+                endGame();
+            }
+        }
+
+        function collectCrown(crown) {
+            crown.collected = true;
+            playSuccessSound();
+            currentQuestion = {
+                num1: crown.num1,
+                num2: crown.num2,
+                answer: crown.num1 * crown.num2
+            };
+            showQuestion();
+        }
+
+        function showQuestion() {
+            isPaused = true;
+            const questionBox = document.getElementById('questionBox');
+            const questionText = document.getElementById('questionText');
+            const answerInput = document.getElementById('answerInput');
+            const feedback = document.getElementById('feedback');
+            
+            questionText.textContent = `${currentQuestion.num1} × ${currentQuestion.num2} = ?`;
+            answerInput.value = '';
+            feedback.textContent = '';
+            questionBox.classList.add('show');
+            answerInput.focus();
+        }
+
+        function checkAnswer() {
+            const answerInput = document.getElementById('answerInput');
+            const feedback = document.getElementById('feedback');
+            const userAnswer = parseInt(answerInput.value);
+            
+            if (userAnswer === currentQuestion.answer) {
+                feedback.textContent = '¡Correcto! ✨';
+                feedback.className = 'correct';
+                score++;
+                document.getElementById('score').textContent = `👑 Coronas: ${score}`;
+                
+                setTimeout(() => {
+                    hideQuestion();
+                    
+                    if (crowns.every(c => c.collected)) {
+                        nextLevel();
+                    }
+                }, 1000);
+            } else {
+                feedback.textContent = `¡Incorrecto! La respuesta es ${currentQuestion.answer}`;
+                feedback.className = 'incorrect';
+                lives--;
+                playErrorSound();
+                document.getElementById('lives').textContent = `❤️ Vidas: ${lives}`;
+                
+                if (lives <= 0) {
+                    setTimeout(() => {
+                        hideQuestion();
+                        endGame();
+                    }, 1500);
+                } else {
+                    setTimeout(() => {
+                        hideQuestion();
+                    }, 2000);
+                }
+            }
+        }
+
+        function showJoke() {
+            const jokeBox = document.getElementById('jokeBox');
+            const jokeText = document.getElementById('jokeText');
+            
+            const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+            jokeText.textContent = randomJoke;
+            
+            jokeBox.classList.add('show');
+            playLevelCompleteSound();
+        }
+
+        document.getElementById('continueBtn').addEventListener('click', () => {
+            document.getElementById('jokeBox').classList.remove('show');
+            isPaused = false;
+            spawnLevel();
+            player.x = 50;
+            player.y = 450;
+            player.velocityY = 0;
+            player.velocityX = 0;
+        });
+
+        function nextLevel() {
+            level++;
+            document.getElementById('level').textContent = `📊 Nivel: ${level}`;
+            isPaused = true;
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('¡NIVEL COMPLETADO!', canvas.width/2, canvas.height/2 - 30);
+            ctx.fillStyle = '#FFF';
+            ctx.font = '32px Arial';
+            ctx.fillText(`Nivel ${level}`, canvas.width/2, canvas.height/2 + 20);
+            ctx.font = '24px Arial';
+            ctx.fillText('¡Aquí va tu premio: un chiste! 😄', canvas.width/2, canvas.height/2 + 60);
+            
+            setTimeout(() => {
+                showJoke();
+            }, 2000);
+        }
+
+        function hideQuestion() {
+            const questionBox = document.getElementById('questionBox');
+            questionBox.classList.remove('show');
+            isPaused = false;
+            currentQuestion = null;
+        }
+
+        function endGame() {
+            gameRunning = false;
+            const gameOver = document.getElementById('gameOver');
+            const finalScore = document.getElementById('finalScore');
+            const finalMessage = document.getElementById('finalMessage');
+            
+            finalScore.textContent = `Coronas: ${score} | Nivel alcanzado: ${level}`;
+            
+            if (level >= 5) {
+                finalMessage.textContent = '¡Eres un MAESTRO de las matemáticas! 🌟👑';
+            } else if (score >= 15) {
+                finalMessage.textContent = '¡Excelente trabajo! ¡Casi eres un genio! 🎓';
+            } else if (score >= 10) {
+                finalMessage.textContent = '¡Muy bien! Sigue practicando 📚';
+            } else if (score >= 5) {
+                finalMessage.textContent = '¡Buen intento! Puedes mejorar 💪';
+            } else {
+                finalMessage.textContent = '¡No te rindas! La práctica hace al maestro 🎯';
+            }
+            
+            gameOver.classList.add('show');
+        }
+
+        function restartGame() {
+            score = 0;
+            lives = 3;
+            level = 1;
+            gameRunning = true;
+            gameStarted = false;
+            invincible = false;
+            invincibleTimer = 0;
+            selectedTable = null;
+            tableMode = 'none';
+            
+            document.getElementById('score').textContent = `👑 Coronas: ${score}`;
+            document.getElementById('lives').textContent = `❤️ Vidas: ${lives}`;
+            document.getElementById('level').textContent = `📊 Nivel: ${level}`;
+            document.getElementById('tableMode').textContent = `📚 Modo: -`;
+            document.getElementById('gameOver').classList.remove('show');
+            document.getElementById('tableMenu').classList.remove('hidden');
+            document.getElementById('startGameBtn').disabled = true;
+            
+            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+            
+            player.x = 50;
+            player.y = 450;
+            player.velocityY = 0;
+            player.velocityX = 0;
+        }
+
+        function gameLoop() {
+            if (gameRunning) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                drawClouds();
+                drawPlatforms();
+                drawCrowns();
+                drawMonsters();
+                updateMonsters();
+                updatePlayer();
+                drawPlayer();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted) return;
+            keys[e.key] = true;
+            
+            if ((e.key === ' ' || e.key === 'ArrowUp') && !player.isJumping && !isPaused) {
+                player.velocityY = -player.jumpPower;
+                e.preventDefault();
+            }
+            
+            if (e.key === 'Enter' && isPaused && currentQuestion) {
+                checkAnswer();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        document.getElementById('leftBtn').addEventListener('mousedown', () => { keys['ArrowLeft'] = true; });
+        document.getElementById('leftBtn').addEventListener('mouseup', () => { keys['ArrowLeft'] = false; });
+        document.getElementById('leftBtn').addEventListener('touchstart', (e) => { e.preventDefault(); keys['ArrowLeft'] = true; });
+        document.getElementById('leftBtn').addEventListener('touchend', (e) => { e.preventDefault(); keys['ArrowLeft'] = false; });
+
+        document.getElementById('rightBtn').addEventListener('mousedown', () => { keys['ArrowRight'] = true; });
+        document.getElementById('rightBtn').addEventListener('mouseup', () => { keys['ArrowRight'] = false; });
+        document.getElementById('rightBtn').addEventListener('touchstart', (e) => { e.preventDefault(); keys['ArrowRight'] = true; });
+        document.getElementById('rightBtn').addEventListener('touchend', (e) => { e.preventDefault(); keys['ArrowRight'] = false; });
+
+        document.getElementById('jumpBtn').addEventListener('click', () => {
+            if (!player.isJumping && !isPaused && gameStarted) {
+                player.velocityY = -player.jumpPower;
+            }
+        });
+        document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!player.isJumping && !isPaused && gameStarted) {
+                player.velocityY = -player.jumpPower;
+            }
+        });
+
+        document.getElementById('submitAnswer').addEventListener('click', checkAnswer);
+        
+        document.getElementById('answerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        document.getElementById('restartBtn').addEventListener('click', restartGame);
+
+        // Start game loop
+        gameLoop();
+    </script>
+</body>
+</html>
