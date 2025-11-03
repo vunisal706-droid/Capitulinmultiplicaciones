@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Funciona?</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        h1 { font-size: 48px; }
+        .emoji { font-size: 80px; margin: 20px; }
+        button {
+            padding: 20px 40px;
+            font-size: 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="emoji">🎮</div>
+    <h1>¡Funciona!</h1>
+    <p style="font-size: 24px;">Si ves esto, el HTML funciona en local</p>
+    
+    <div class="info">
+        <p><strong>Ahora prueba los juegos:</strong></p>
+        <button onclick="location.href='multiplicaciones.html'">Multiplicaciones</button>
+        <button onclick="location.href='index.html'">Sumas y Restas</button>
+        <button onclick="location.href='inicio.html'">Página de Inicio</button>
+    </div>
+
+    <div class="info" style="margin-top: 30px; font-size: 14px;">
+        <p><strong>📌 IMPORTANTE:</strong></p>
+        <p>✅ En local: El juego funciona pero NO se puede instalar como app</p>
+        <p>✅ En GitHub Pages: Funciona TODO incluida instalación</p>
+        <p>👉 Lee el archivo <strong>GUIA-GITHUB.md</strong> para subirlo a internet</p>
+    </div>
+
+    <script>
+        // Mostrar si está en local o servidor
+        const protocol = window.location.protocol;
+        if (protocol === 'file:') {
+            console.log('✅ Estás en LOCAL - El juego funciona pero no se puede instalar como PWA');
+        } else {
+            console.log('✅ Estás en SERVIDOR - Todo funciona incluida instalación PWA');
+        }
+    </script>
+</body>
+</html>
