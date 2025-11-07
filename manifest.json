@@ -2,7 +2,7 @@
   "name": "Capitulín - Multiplicaciones Mágicas",
   "short_name": "Capitulín x",
   "description": "Juego educativo de multiplicaciones con Capitulín",
-  "start_url": "./multiplicaciones.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#87CEEB",
   "theme_color": "#667eea",
