@@ -1,6 +1,7 @@
-const CACHE_NAME = 'capitulin-multiplicaciones-v1';
+const CACHE_NAME = 'capitulin-multiplicaciones-v2';
 const urlsToCache = [
-  './multiplicaciones.html',
+  './',
+  './index.html',
   './manifest.json'
 ];
 
@@ -61,7 +62,7 @@ self.addEventListener('fetch', event => {
           return response;
         }).catch(() => {
           // Si falla la red, intentar servir desde cache
-          return caches.match('./multiplicaciones.html');
+          return caches.match('./index.html');
         });
       })
   );
