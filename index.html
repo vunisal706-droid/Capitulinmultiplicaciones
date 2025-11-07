@@ -9,6 +9,21 @@
     <title>Capitulín - Multiplicaciones Mágicas</title>
 
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='40' r='25' fill='%23FFD4A3'/><circle cx='44' cy='20' r='12' fill='%234B2E1F'/><circle cx='50' cy='16' r='12' fill='%234B2E1F'/><circle cx='56' cy='20' r='12' fill='%234B2E1F'/><circle cx='42' cy='36' r='3' fill='%23000'/><circle cx='58' cy='36' r='3' fill='%23000'/><path d='M 50 42 Q 50 48 50 48' stroke='%23000' stroke-width='2' fill='none'/><rect x='35' y='52' width='30' height='18' fill='%23FF6347'/><rect x='30' y='54' width='5' height='12' fill='%23FFD700'/><rect x='65' y='54' width='5' height='12' fill='%23FFD700'/><rect x='38' y='70' width='10' height='15' fill='%230066CC'/><rect x='52' y='70' width='10' height='15' fill='%230066CC'/><text x='50' y='10' font-size='20' text-anchor='middle'>👑</text></svg>">
+    <link rel="manifest" href="./manifest.json">
+    <script>
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
     <style>
         * {
             margin: 0;
