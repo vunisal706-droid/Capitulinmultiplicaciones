@@ -417,21 +417,8 @@ class Game {
     }
 
     spawnPencils() {
+        // Lápices desactivados: no se generan obstáculos
         this.pencils = [];
-        const pencilColors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1'];
-        
-        for (let i = 0; i < 3; i++) {
-            const x = 150 + i * 250;
-            const height = 80 + Math.random() * 40;
-            this.pencils.push({
-                x: x,
-                y: this.canvas.height - 50 - height,
-                width: 40,
-                height: height,
-                color: pencilColors[i % pencilColors.length],
-                type: 'vertical'
-            });
-        }
     }
 
     spawnCrowns() {
@@ -1061,7 +1048,6 @@ class Game {
         this.drawBackground();
         this.drawClouds();
         this.drawPlatforms();
-        this.drawPencils();
         this.drawCrowns();
         this.drawWitch();
         this.drawMonsters();
