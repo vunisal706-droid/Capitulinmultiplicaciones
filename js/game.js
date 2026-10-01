@@ -22,14 +22,20 @@ class Game {
     resizeCanvas() {
         const isPortrait = window.innerHeight > window.innerWidth;
         
+        let cssW, cssH;
         if (isPortrait) {
-            this.canvas.width = Math.min(window.innerWidth, 800);
-            this.canvas.height = Math.min(window.innerHeight, 600);
+            cssW = Math.min(window.innerWidth, 800);
+            cssH = Math.min(window.innerHeight, 600);
         } else {
-            const maxHeight = window.innerHeight;
-            this.canvas.height = maxHeight;
-            this.canvas.width = Math.min(maxHeight * 1.77, window.innerWidth);
+            cssH = window.innerHeight;
+            cssW = Math.min(cssH * 1.77, window.innerWidth);
         }
+        // Limitar resolución interna (pizarras 4K / PCs lentos); el CSS mantiene el tamaño en pantalla
+        const rs = Math.min(1, Math.sqrt((1600 * 900) / (cssW * cssH)));
+        this.canvas.width = Math.round(cssW * rs);
+        this.canvas.height = Math.round(cssH * rs);
+        this.canvas.style.width = Math.round(cssW) + 'px';
+        this.canvas.style.height = Math.round(cssH) + 'px';
         
         if (this.player) {
             this.player.groundY = this.canvas.height - 50;
@@ -164,23 +170,22 @@ class Game {
             const key = id === 'leftBtn' ? 'ArrowLeft' : id === 'rightBtn' ? 'ArrowRight' : null;
             
             if (key) {
-                btn.addEventListener('mousedown', () => { this.keys[key] = true; });
-                btn.addEventListener('mouseup', () => { this.keys[key] = false; });
-                btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys[key] = true; });
-                btn.addEventListener('touchend', (e) => { e.preventDefault(); this.keys[key] = false; });
+                // Pointer Events: funcionan igual con dedo, ratón o lápiz (pizarras digitales)
+                const press = (e) => { e.preventDefault(); this.keys[key] = true; try { btn.setPointerCapture(e.pointerId); } catch (_) {} };
+                const release = () => { this.keys[key] = false; };
+                btn.addEventListener('pointerdown', press);
+                btn.addEventListener('pointerup', release);
+                btn.addEventListener('pointercancel', release);
+                btn.addEventListener('lostpointercapture', release);
             } else {
-                btn.addEventListener('click', () => {
-                    if (!this.player.isJumping && !this.isPaused && this.gameStarted) {
-                        this.player.velocityY = -this.player.jumpPower;
-                    }
-                });
-                btn.addEventListener('touchstart', (e) => {
+                btn.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
                     if (!this.player.isJumping && !this.isPaused && this.gameStarted) {
                         this.player.velocityY = -this.player.jumpPower;
                     }
                 });
             }
+            btn.addEventListener('contextmenu', (e) => e.preventDefault());
         });
 
         // Teclado
@@ -194,6 +199,11 @@ class Game {
         });
 
         document.addEventListener('keyup', (e) => { this.keys[e.key] = false; });
+
+        // Si se pierde el foco con una tecla/botón pulsado, soltar todo
+        const clearKeys = () => { for (const k in this.keys) this.keys[k] = false; };
+        window.addEventListener('blur', clearKeys);
+        document.addEventListener('visibilitychange', () => { clearKeys(); if (this.resetLoopClock) this.resetLoopClock(); });
     }
 
     initPWA() {
@@ -1019,15 +1029,33 @@ class Game {
 
     // ==================== BUCLE PRINCIPAL ====================
 
+    // Lógica a 60 pasos/s fijos aunque el equipo pinte menos fotogramas
+    // (pizarras digitales y PCs lentos): el personaje va igual de rápido en todos.
     gameLoop() {
-        if (this.gameRunning && !this.isPaused) {
-            this.updatePlayer();
-            this.updateMonsters();
-        }
-
-        this.draw();
-
-        requestAnimationFrame(() => this.gameLoop());
+        if (this.loopRunning) return;
+        this.loopRunning = true;
+        const STEP = 1000 / 60;
+        let last = performance.now(), acc = 0;
+        this.resetLoopClock = () => { last = performance.now(); acc = 0; };
+        const frame = (now) => {
+            acc += Math.min(now - last, 250);
+            last = now;
+            if (this.gameRunning && !this.isPaused) {
+                let steps = 0;
+                while (acc >= STEP && steps < 6 && !this.isPaused) {
+                    this.updatePlayer();
+                    this.updateMonsters();
+                    acc -= STEP;
+                    steps++;
+                }
+                if (steps >= 6 || this.isPaused) acc = 0;
+            } else {
+                acc = 0;
+            }
+            this.draw();
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
     }
 
     // ==================== RENDERIZADO ====================
@@ -1054,7 +1082,23 @@ class Game {
         this.drawPlayer();
     }
 
+    // Fondo estático cacheado: se dibuja una vez por nivel/tamaño y luego se copia
     drawBackground() {
+        const key = this.level + '_' + this.canvas.width + '_' + this.canvas.height;
+        if (key !== this.bgKey || !this.bgCache) {
+            this.bgCache = document.createElement('canvas');
+            this.bgCache.width = this.canvas.width;
+            this.bgCache.height = this.canvas.height;
+            const realCtx = this.ctx;
+            this.ctx = this.bgCache.getContext('2d');
+            try { this.drawBackgroundStatic(); } finally { this.ctx = realCtx; }
+            this.bgKey = key;
+        }
+        this.ctx.drawImage(this.bgCache, 0, 0);
+        if (this.currentTheme().decor === 'nieve') this.drawSnow(this.canvas.width, this.canvas.height);
+    }
+
+    drawBackgroundStatic() {
         const ctx = this.ctx;
         const t = this.currentTheme();
         const W = this.canvas.width, H = this.canvas.height;
@@ -1177,8 +1221,11 @@ class Game {
             ctx.restore();
         }
 
-        // Copos de nieve animados en el tema de nieve
-        if (t.decor === 'nieve') {
+    }
+
+    drawSnow(W, H) {
+        const ctx = this.ctx;
+        {
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
             const now = Date.now() / 1000;
             for (let f = 0; f < 25; f++) {
