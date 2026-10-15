@@ -416,6 +416,12 @@
             font-size: 18px;
         }
 
+        #hintBox:empty { display: none; }
+        #hintBox { margin-top: 10px; max-width: 420px; margin-left: auto; margin-right: auto; padding: 10px 14px; border-radius: 12px; font-size: 18px; line-height: 1.45; color: #333; background: #FFF8DC; border: 2px dashed #FFD700; }
+        #hintBox.fuerte { background: #E3F2FD; border-color: #64B5F6; }
+        #hintBox.ejemplo { background: #E8F5E9; border: 2px solid #4CAF50; }
+        #hintBox .pasos { display: inline-block; margin: 6px 0; font-size: 20px; font-weight: bold; color: #1565C0; }
+        #submitAnswer:disabled { opacity: .5; cursor: default; }
         .correct { color: #4CAF50; }
         .incorrect { color: #FF6347; }
 
@@ -666,6 +672,7 @@
             <br>
             <button id="submitAnswer">Responder</button>
             <div id="feedback"></div>
+            <div id="hintBox"></div>
         </div>
 
         <div id="jokeBox">
@@ -692,5 +699,17 @@
 <script>
 (function(){var A='Víctor Manuel Única Salas · CEIP Capitulaciones de Santa Fe',O='https://vunisal706-droid.github.io/Capitulinmultiplicaciones/',H='CAPI-capitulinmultiplicaciones-59854cd5e5';window.__capiAutoria={autor:A,original:O,huella:H,licencia:'CC BY-NC-SA 4.0'};function poner(){if(!document.body||document.getElementById('capi-autoria'))return;var d=document.createElement('div');d.id='capi-autoria';d.setAttribute('aria-hidden','true');d.textContent='\u00a9 CEIP Capitulaciones \u00b7 CC BY-NC-SA';d.title=A+' \u00b7 '+H;d.style.cssText='position:fixed;left:6px;bottom:4px;z-index:2147483000;font:10px/1.2 system-ui,sans-serif;color:rgba(60,60,60,.6);background:rgba(255,255,255,.55);padding:1px 5px;border-radius:6px;pointer-events:none';document.body.appendChild(d);var h=location.hostname,ok=!h||/(^|\.)vunisal706-droid\.github\.io$|(^|\.)colegiocapitulaciones\.com$|^localhost$|^127\.0\.0\.1$/.test(h);if(!ok&&!document.getElementById('capi-original')){var b=document.createElement('div');b.id='capi-original';b.innerHTML='Este juego es una obra del <b>CEIP Capitulaciones de Santa Fe</b> ('+A.split(' \u00b7')[0]+'). <a href="'+O+'" style="color:#ffd54a">Juega a la versi\u00f3n original</a>';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483001;background:#0b3a7e;color:#fff;font:13px/1.4 system-ui,sans-serif;padding:6px 10px;text-align:center';document.body.appendChild(b)}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',poner);else poner();})();
 </script>
+
+    <!-- Aviso de novedades (sale una sola vez por dispositivo) -->
+    <div id="novedadesBox" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px">
+        <div style="background:#fff;border:4px solid #FFD700;border-radius:18px;max-width:420px;padding:20px 22px;text-align:center;font-family:inherit;box-shadow:0 10px 40px rgba(0,0,0,.4)">
+            <div style="font-size:40px">💡</div>
+            <h2 style="margin:6px 0 10px;color:#1565C0">¡Novedad en Capitulín!</h2>
+            <p style="margin:0 0 10px;font-size:17px;line-height:1.45;color:#333">Si fallas una multiplicación, <b>Capitulín ya no te dice la solución</b>: te explica qué ha pasado y te da una pista.</p>
+            <p style="margin:0 0 14px;font-size:17px;line-height:1.45;color:#333">Tienes <b>3 intentos</b>. Si aun así no sale, te enseña cómo se hace paso a paso.</p>
+            <button id="novedadesOk" style="font-size:18px;padding:10px 26px;background:#4CAF50;color:#fff;border:none;border-radius:10px;font-weight:bold;cursor:pointer">¡Entendido!</button>
+        </div>
+    </div>
+    <script>(function(){var K='capitulin-mult-novedad-pistas-2026-10';try{if(localStorage.getItem(K))return;}catch(e){}var b=document.getElementById('novedadesBox');b.style.display='flex';document.getElementById('novedadesOk').onclick=function(){b.style.display='none';try{localStorage.setItem(K,'1');}catch(e){}};})();</script>
 </body>
 </html>

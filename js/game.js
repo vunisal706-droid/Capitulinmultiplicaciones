@@ -783,21 +783,88 @@ class Game {
         const answerInput = document.getElementById('answerInput');
         const feedback = document.getElementById('feedback');
         
+        this.currentQuestion.tries = 0;
+        this.answerLocked = false;
         questionText.textContent = `${this.currentQuestion.num1} × ${this.currentQuestion.num2} = ?`;
         answerInput.value = '';
-        feedback.textContent = '';
+        answerInput.disabled = false;
+        document.getElementById('submitAnswer').disabled = false;
+        feedback.innerHTML = '';
+        feedback.className = '';
+        document.getElementById('hintBox').innerHTML = '';
+        document.getElementById('hintBox').className = '';
         questionBox.classList.add('show');
         answerInput.focus();
     }
 
+    // ==================== PISTAS PROGRESIVAS (15-oct-2026) ====================
+    // 1.er fallo: qué ha podido fallar + pista suave. 2.º fallo: pista concreta.
+    // 3.er fallo: ejemplo resuelto paso a paso. Nunca se da la respuesta antes del 3.er intento.
+
+    diagnoseError(a, b, r) {
+        const ok = a * b;
+        if (isNaN(r)) return 'Escribe un número antes de responder.';
+        if (r === a + b) return `¡Ojo! Has <b>sumado</b> ${a} + ${b}. El signo × significa «grupos iguales».`;
+        if (r === ok - a) return `Te has quedado corto por <b>un grupo de ${a}</b>.`;
+        if (r === ok + a) return `Te has pasado por <b>un grupo de ${a}</b>.`;
+        if (r === ok - b) return `Te has quedado corto por <b>un grupo de ${b}</b>.`;
+        if (r === ok + b) return `Te has pasado por <b>un grupo de ${b}</b>.`;
+        const rs = String(r), os = String(ok);
+        if (rs.length === 2 && os.length === 2 && rs === os.split('').reverse().join('')) return '¡Casi! Tienes las <b>cifras al revés</b>.';
+        if (r > 0 && (r % a === 0 || r % b === 0) && r <= 10 * Math.max(a, b)) {
+            const t = r % a === 0 ? a : b;
+            return `${r} está en la <b>tabla del ${t}</b>, pero no es ${a} × ${b}.`;
+        }
+        if (Math.abs(r - ok) <= 2) return '¡Muy cerca! Revisa la cuenta con calma.';
+        return 'Todavía no. ¡Vamos a pensarlo juntos!';
+    }
+
+    softHint(a, b) {
+        const [p, g] = a <= b ? [a, b] : [b, a];
+        if (p === 1) return `Multiplicar por 1 deja el número igual.`;
+        if (p === 10 || g === 10) return `Multiplicar por 10: pon un <b>0</b> detrás del otro número.`;
+        if (p === 2) return `× 2 es el <b>doble</b>: ${g} + ${g}.`;
+        if (p === 5 || g === 5) { const o = p === 5 ? g : p; return `× 5 es la <b>mitad de × 10</b>. ¿Cuánto es ${o} × 10?`; }
+        if (p === 9 || g === 9) { const o = p === 9 ? g : p; return `× 9 es <b>× 10 menos una vez</b>: ${o} × 10 − ${o}.`; }
+        if (p === 4) return `× 4 es el <b>doble del doble</b>: ${g} → ${g * 2} → ¿?`;
+        return `Piensa en <b>${p} grupos de ${g}</b>. Recuerda: ${a} × ${b} es lo mismo que ${b} × ${a}.`;
+    }
+
+    concreteHint(a, b) {
+        const [p, g] = a <= b ? [a, b] : [b, a];
+        const prev = g * (p - 1);
+        return `Usa lo que ya sabes: ${p - 1} × ${g} = <b>${prev}</b>.<br>Ahora suma <b>un grupo más de ${g}</b>: ${prev} + ${g} = ¿?`;
+    }
+
+    workedExample(a, b) {
+        const [p, g] = a <= b ? [a, b] : [b, a];
+        const steps = [];
+        for (let i = 1; i <= p; i++) steps.push(g * i);
+        return `Contamos de ${g} en ${g}:<br><span class="pasos">${steps.join(' → ')}</span><br>${a} × ${b} = <b>${a * b}</b>`;
+    }
+
     checkAnswer() {
+        if (!this.currentQuestion || this.answerLocked) return;
         const answerInput = document.getElementById('answerInput');
         const feedback = document.getElementById('feedback');
+        const hintBox = document.getElementById('hintBox');
         const userAnswer = parseInt(answerInput.value);
+        const { num1: a, num2: b, answer } = this.currentQuestion;
         
-        if (userAnswer === this.currentQuestion.answer) {
-            feedback.textContent = '¡Correcto! ✨';
+        if (isNaN(userAnswer)) {
+            feedback.innerHTML = 'Escribe un número antes de responder.';
+            feedback.className = 'incorrect';
+            answerInput.focus();
+            return;
+        }
+        
+        if (userAnswer === answer) {
+            this.answerLocked = true;
+            const t = this.currentQuestion.tries;
+            feedback.innerHTML = t === 0 ? '¡Correcto! ✨' : '¡Correcto! Lo has conseguido con la pista 💪';
             feedback.className = 'correct';
+            hintBox.innerHTML = '';
+            hintBox.className = '';
             this.score++;
             document.getElementById('score').textContent = `👑 Coronas: ${this.score}`;
             this.updateShopButton();
@@ -805,19 +872,43 @@ class Game {
             setTimeout(() => {
                 this.hideQuestion();
                 if (this.crowns.every(c => c.collected)) this.nextLevel();
-            }, 1000);
+            }, t === 0 ? 1000 : 1600);
+            return;
+        }
+        
+        this.currentQuestion.tries++;
+        const tries = this.currentQuestion.tries;
+        this.playErrorSound();
+        feedback.innerHTML = this.diagnoseError(a, b, userAnswer);
+        feedback.className = 'incorrect';
+        
+        if (tries === 1) {
+            hintBox.innerHTML = '💡 <b>Pista:</b> ' + this.softHint(a, b);
+            hintBox.className = 'pista';
+            answerInput.value = '';
+            answerInput.focus();
+        } else if (tries === 2) {
+            hintBox.innerHTML = '🔎 <b>Otra pista:</b> ' + this.concreteHint(a, b);
+            hintBox.className = 'pista fuerte';
+            answerInput.value = '';
+            answerInput.focus();
         } else {
-            feedback.textContent = `¡Incorrecto! = ${this.currentQuestion.answer}`;
-            feedback.className = 'incorrect';
+            // 3.er fallo: ejemplo resuelto y se pierde una vida
+            this.answerLocked = true;
+            answerInput.disabled = true;
+            document.getElementById('submitAnswer').disabled = true;
+            feedback.innerHTML = 'Mira cómo se hace y la próxima te sale 🙂';
+            hintBox.innerHTML = this.workedExample(a, b);
+            hintBox.className = 'pista ejemplo';
             this.lives--;
-            this.playErrorSound();
             document.getElementById('lives').textContent = `❤️ Vidas: ${this.lives}`;
             
-            if (this.lives <= 0) {
-                setTimeout(() => { this.hideQuestion(); this.endGame(); }, 1500);
-            } else {
-                setTimeout(() => this.hideQuestion(), 2000);
-            }
+            setTimeout(() => {
+                answerInput.disabled = false;
+                document.getElementById('submitAnswer').disabled = false;
+                this.hideQuestion();
+                if (this.lives <= 0) this.endGame();
+            }, 4500);
         }
     }
 
